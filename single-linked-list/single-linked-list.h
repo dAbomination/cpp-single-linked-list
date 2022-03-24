@@ -89,24 +89,30 @@ class SingleLinkedList {
         // Возвращает ссылку на самого себя
         // Инкремент итератора, не указывающего на существующий элемент списка, приводит к неопределённому поведению
         BasicIterator& operator++() noexcept {
+            // Проверяем указывает ли начальный итератор на существующий элемент списка
+            assert(node_ != nullptr);
             node_ = node_->next_node;
             return *this;
         }
 
         // Оператор постинкремента. После его вызова итератор указывает на следующий элемент списка
         // Возвращает прежнее значение итератора
-        // Инкремент итератора, не указывающего на существующий элемент списка,
-        // приводит к неопределённому поведению
+        // Инкремент итератора, не указывающего на существующий элемент списка, приводит к неопределённому поведению
         BasicIterator operator++(int) noexcept {
+            // Проверяем указывает ли начальный итератор на существующий элемент списка
+            assert(node_ != nullptr);
+
             auto old_value(*this);
             ++(*this);
             return old_value;
         }
 
         // Операция разыменования. Возвращает ссылку на текущий элемент
-        // Вызов этого оператора у итератора, не указывающего на существующий элемент списка,
-        // приводит к неопределённому поведению
+        // Вызов этого оператора у итератора, не указывающего на существующий элемент списка, приводит к неопределённому поведению
         [[nodiscard]] reference operator*() const noexcept {
+            // Проверяем указывает ли итератор на существующий элемент списка            
+            assert(node_ != nullptr);
+
             return node_->value;
         }
 
@@ -114,10 +120,10 @@ class SingleLinkedList {
         // Вызов этого оператора у итератора, не указывающего на существующий элемент списка,
         // приводит к неопределённому поведению
         [[nodiscard]] pointer operator->() const noexcept {
-            if (node_ != nullptr) {
-                return  { &(node_->value) };
-            }
-            return {};
+            // Проверяем указывает ли начальный итератор на существующий элемент списка
+            assert(node_ != nullptr);
+
+            return  { &(node_->value) };
         }
 
     private:
@@ -138,30 +144,28 @@ public:
     SingleLinkedList() = default;
 
     SingleLinkedList(std::initializer_list<Type> values) {
-        // Сначала надо удостовериться, что текущий список пуст
-        assert(size_ == 0 && head_.next_node == nullptr);
-
-        SingleLinkedList tmp;
-        // Копируем из values во временный список
-        for (auto it = std::rbegin(values); it != std::rend(values); ++it) {
-            tmp.PushFront(*it);
-        }
-
-        // После того как элементы скопированы, обмениваем данные текущего списка и tmp
-        swap(tmp);
-        // Теперь tmp пуст, а текущий список содержит копию элементов values
+        FillingListInSeries(values);        
     }
 
     // Конструктор копирования
     SingleLinkedList(const SingleLinkedList& other) {
-        // Сначала надо удостовериться, что текущий список пуст
-        assert(size_ == 0 && head_.next_node == nullptr);
+        FillingListInSeries(other);
+    }
 
+    // Заполняет последовательно односвязный список из заданного контейнера у которого есть
+    // begin() и end()
+    template <typename Container>
+    void FillingListInSeries(const Container& from) {
+        // Сначала надо удостовериться, что текущий список пуст
+        assert(IsEmpty());
+
+        // Временный список в который будем добавлять элементы из контейнера from
         SingleLinkedList<Type> temp_list;
+        // Итератор указывающий на добавленный элемент
         SingleLinkedList<Type>::Iterator temp_it(temp_list.before_begin());
 
         // Поэлементо добавляем элементы из other во временный список
-        for (auto value : other) {
+        for (auto value : from) {
             temp_list.InsertAfter(temp_it, value);
             ++temp_it;
         }
@@ -201,24 +205,27 @@ public:
     // Удаляет элемент, следующий за pos.
     // Возвращает итератор на элемент, следующий за удалённым
     Iterator EraseAfter(ConstIterator pos) noexcept {
-        assert(pos.node_ != nullptr);
+        // Проверяем что список не пуст
+        assert(!IsEmpty());
         // Сохраняем указатель на элемент который следует за удалённым
         SingleLinkedList<Type>::Node* node_after_deleted = pos.node_->next_node->next_node;
         // Удаляем нод следующий за pos
         delete pos.node_->next_node;
         pos.node_->next_node = node_after_deleted;
-
+       
+        --size_;
         return Iterator(node_after_deleted);
     }
 
     // Удаляет первый элемента непустого списка за время O(1)
     void PopFront() noexcept {
         // Проверяем что список не пуст
-        if (head_.next_node == nullptr) {
-            return;
-        }
+        assert(!IsEmpty());
+
         SingleLinkedList<Type>::Node* node_to_del = head_.next_node;
         head_.next_node = head_.next_node->next_node;
+
+        --size_;
         delete node_to_del;
     }
 
@@ -245,7 +252,7 @@ public:
     // Оператор присваивания
     SingleLinkedList& operator=(const SingleLinkedList& rhs) {
         // Проверяем не присваивается ли объект сам себе
-        if (this->head_.next_node == rhs.head_.next_node) {
+        if (this == &rhs) {
             return *this;
         }
         SingleLinkedList tmp(rhs);
