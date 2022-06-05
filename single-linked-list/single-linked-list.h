@@ -150,30 +150,7 @@ public:
     // Конструктор копирования
     SingleLinkedList(const SingleLinkedList& other) {
         FillingListInSeries(other);
-    }
-
-    // Заполняет последовательно односвязный список из заданного контейнера у которого есть
-    // begin() и end()
-    template <typename Container>
-    void FillingListInSeries(const Container& from) {
-        // Сначала надо удостовериться, что текущий список пуст
-        assert(IsEmpty());
-
-        // Временный список в который будем добавлять элементы из контейнера from
-        SingleLinkedList<Type> temp_list;
-        // Итератор указывающий на добавленный элемент
-        SingleLinkedList<Type>::Iterator temp_it(temp_list.before_begin());
-
-        // Поэлементо добавляем элементы из other во временный список
-        for (auto value : from) {
-            temp_list.InsertAfter(temp_it, value);
-            ++temp_it;
-        }
-
-        // После того как элементы скопированы, обмениваем данные текущего списка и tmp
-        swap(temp_list);
-        // Теперь tmp пуст, а текущий список содержит копию элементов other
-    }
+    }    
 
     // Деструктор, очищает всю выделеную память
     ~SingleLinkedList() {
@@ -207,6 +184,7 @@ public:
     Iterator EraseAfter(ConstIterator pos) noexcept {
         // Проверяем что список не пуст
         assert(!IsEmpty());
+
         // Сохраняем указатель на элемент который следует за удалённым
         SingleLinkedList<Type>::Node* node_after_deleted = pos.node_->next_node->next_node;
         // Удаляем нод следующий за pos
@@ -319,6 +297,29 @@ private:
     // Фиктивный узел, используется для вставки "перед первым элементом"
     Node head_ = {};
     size_t size_ = 0;
+
+    // Заполняет последовательно односвязный список из заданного контейнера у которого есть
+    // begin() и end()
+    template <typename Container>
+    void FillingListInSeries(const Container& from) {
+        // Сначала надо удостовериться, что текущий список пуст
+        assert(IsEmpty());
+
+        // Временный список в который будем добавлять элементы из контейнера from
+        SingleLinkedList<Type> temp_list;
+        // Итератор указывающий на добавленный элемент
+        SingleLinkedList<Type>::Iterator temp_it(temp_list.before_begin());
+
+        // Поэлементо добавляем элементы из other во временный список
+        for (auto value : from) {
+            temp_list.InsertAfter(temp_it, value);
+            ++temp_it;
+        }
+
+        // После того как элементы скопированы, обмениваем данные текущего списка и tmp
+        swap(temp_list);
+        // Теперь tmp пуст, а текущий список содержит копию элементов other
+    }
 };
 
 // Меняет местами данные lhs и rhs
